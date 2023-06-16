@@ -1,6 +1,7 @@
 ---
 - name: Enable SSH and deploy cPanel
-  hosts: local
+  hosts: localhost
+  connection: local
   gather_facts: false
   become: true
 
@@ -17,7 +18,8 @@
         enabled: true
 
 - name: Deploy cPanel on CentOS 7
-  hosts: local
+  hosts: localhost
+  connection: local
   become: true
   tasks:
     - name: Disable NetworkManager service
