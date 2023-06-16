@@ -1,10 +1,15 @@
 ---
 - name: Enable SSH and deploy cPanel
-  hosts: cpanel
+  hosts: local
   gather_facts: false
   become: true
 
   tasks:
+    - name: Update all packages
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes
     - name: Enable SSH service
       service:
         name: ssh
@@ -12,7 +17,7 @@
         enabled: true
 
 - name: Deploy cPanel on CentOS 7
-  hosts: cpanel
+  hosts: local
   become: true
   tasks:
     - name: Disable NetworkManager service
@@ -54,12 +59,6 @@
       command: /root/install-cpanel.sh
       args:
         creates: /root/cpanel-installed
-
-    - name: Check if cPanel installation is completed
-      wait_for:
-        path: /root/cpanel-installed
-        timeout: 300
-        state: present
 
     - name: Cleanup installation files
       file:
