@@ -67,11 +67,6 @@
         state: absent
       ignore_errors: true
 
-    - name: Set root password
-      command: /usr/local/cpanel/bin/htpasswd -cb /root/.htpasswd root your_root_password
-      args:
-        creates: /root/.htpasswd
-
     - name: Enable cPanel service
       systemd:
         name: cpanel
