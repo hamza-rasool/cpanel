@@ -1,0 +1,79 @@
+---
+- name: Enable SSH and deploy cPanel
+  hosts: cpanel
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Enable SSH service
+      service:
+        name: ssh
+        state: started
+        enabled: true
+
+- name: Deploy cPanel on CentOS 7
+  hosts: cpanel
+  become: true
+  tasks:
+    - name: Disable NetworkManager service
+      service:
+        name: NetworkManager
+        state: stopped
+        enabled: no
+
+    - name: Disable firewalld service
+      service:
+        name: firewalld
+        state: stopped
+        enabled: no
+
+    - name: Install required packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - perl
+        - curl
+        - screen
+        - wget
+        - bind
+        - bind-libs
+        - bind-utils
+        - quota
+        - libaio
+        - lsof
+        - unzip
+
+    - name: Download cPanel installation script
+      get_url:
+        url: https://securedownloads.cpanel.net/latest
+        dest: /root/install-cpanel.sh
+        mode: 0755
+
+    - name: Run cPanel installation script
+      command: /root/install-cpanel.sh
+      args:
+        creates: /root/cpanel-installed
+
+    - name: Check if cPanel installation is completed
+      wait_for:
+        path: /root/cpanel-installed
+        timeout: 300
+        state: present
+
+    - name: Cleanup installation files
+      file:
+        path: /root/install-cpanel.sh
+        state: absent
+      ignore_errors: true
+
+    - name: Set root password
+      command: /usr/local/cpanel/bin/htpasswd -cb /root/.htpasswd root your_root_password
+      args:
+        creates: /root/.htpasswd
+
+    - name: Enable cPanel service
+      systemd:
+        name: cpanel
+        state: started
+        enabled: yes
